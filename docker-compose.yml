@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: mrms_web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./application:/var/www/html/application
+      - ./system:/var/www/html/system
+      - ./assets:/var/www/html/assets
+      - ./index.php:/var/www/html/index.php
+      - ./.htaccess:/var/www/html/.htaccess
+    environment:
+      - DB_HOST=db
+      - DB_NAME=mrms_db
+      - DB_USER=mrms_user
+      - DB_PASSWORD=mrms_pass
+      - TZ=Asia/Jakarta
+    depends_on:
+      - db
+    networks:
+      - mrms_network
+
+  db:
+    image: postgres:14-alpine
+    container_name: mrms_db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: mrms_db
+      POSTGRES_USER: mrms_user
+      POSTGRES_PASSWORD: mrms_pass
+      TZ: Asia/Jakarta
+      PGTZ: Asia/Jakarta
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - mrms_network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: mrms_pgadmin
+    ports:
+      - "8081:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      - db
+    networks:
+      - mrms_network
+
+volumes:
+  postgres_data:
+
+networks:
+  mrms_network:
+    driver: bridge
